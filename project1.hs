@@ -1,7 +1,7 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-{-# HLINT ignore "Use camelCase" #-}
+-- {-# HLINT ignore "Use camelCase" #-}
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -13,36 +13,59 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)]
 
-cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+-- Helper functions 
+
+addCity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates (might not work when called by other functions hadn't tested that case)
+addCity city cities
+    | city `elem` cities  = cities
+    | otherwise           = city : cities
 
 areEq :: City -> City ->  City -> City -> Bool -- True if pair of city_a and city_b is equivalent to pair city1 and city2
 areEq city_a city_b city1 city2
     | (city_a == city1 && city_b == city2) || (city_a == city2 && city_b == city1) = True
     | otherwise = False
 
-areAdjacent :: RoadMap -> City -> City -> Bool
+-- Functions requested by the project
+
+cities :: RoadMap -> [City] -- It takes a roadmap as argument and then returns a list with all the cities that are there present
+cities [] = []                                                                        -- Case when the roadmap is empty
+cities ( (city1 , city2 , _ ) : rest ) = addCity city1 (addCity city2 (cities rest))  -- Take the roadmap and only process the information related to the cities and not distances
+
+areAdjacent :: RoadMap -> City -> City -> Bool -- True if there is a tuple in the Roadmap which uses the city1 and city2
 areAdjacent [] _ _ = False
 areAdjacent ((city_a, city_b, _):xs) city1 city2
     | areEq city_a city_b city1 city2 = True
     | otherwise = areAdjacent xs city1 city2
 
-distance :: RoadMap -> City -> City -> Maybe Distance
+distance :: RoadMap -> City -> City -> Maybe Distance -- It returns a distance if there is a tuple which uses the city1 and city2
 distance [] _ _ = Nothing
 distance ((city_a, city_b, dist):xs) city1 city2
     | areEq city_a city_b city1 city2 = Just dist
     | otherwise = distance xs city1 city2
 
 adjacent :: RoadMap -> City -> [(City,Distance)] -- ? is there only one road conecting two cities? any specific order?
-adjacent roadmap city = foldr addCity [] roadmap
+adjacent roadmap city = foldr addCity [] roadmap -- Need to review this function since it calls a helper functions which has a different purpose
   where
     addCity (city_a, city_b, dist) xs
       | city_a == city = (city_b, dist) : xs
       | city_b == city = (city_a, dist) : xs
       | otherwise = xs
 
-pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+-- Still needs to be reviewed cuz its not printing the correct results
+pathDistance :: RoadMap -> Path -> Maybe Distance -- Calculates the distance between two cities following a certain path, if that said path exists along roads (RoadMap)
+pathDistance roads path
+    | null path = Just 0  -- Case of empty path
+    | length path == 1 = Just 0  -- Case of single city
+    | otherwise = 
+      case distance roads startCity nextCity of  -- Calculate the distance if there is a road
+        Just dist -> 
+            case pathDistance roads (nextCity : tail (tail path)) of  -- Recursive call for the rest of the path
+                Just total -> Just (dist + total)  -- Sum the distances of the road with the rest
+                Nothing -> Nothing  -- Marks the path as invalid
+        Nothing -> Nothing  -- Marks the path invalid if there is no distance
+  where
+    startCity = head path         -- Selects the first city on the path
+    nextCity = head (tail path)   -- Selects the next city on the path 
 
 --I assum that:
 --1) in (city1, city2, dist) city1 /= city2
@@ -71,7 +94,7 @@ rome roadmap = map fst (maxOccurence (countOccurences (roadsFromCities roadmap) 
       | otherwise = maxOccurence xs ((maxcity, maxcount):rest)
 
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
 
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
