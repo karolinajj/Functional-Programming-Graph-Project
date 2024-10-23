@@ -44,31 +44,31 @@ adjacent roadmap city = foldr addCity [] roadmap
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance = undefined
 
---wrong definition
-rome :: RoadMap -> [City] -- ? what if city_a == city_b should we count it as a road?
+--I assum that:
+--1) in (city1, city2, dist) city1 /= city2
+--2) in the roadmap there is only one triple for each edge
+rome :: RoadMap -> [City]
 rome [] = []
-rome roadmap = map fst (rome_acc (sumFromCities (roadsFromCities roadmap) []) [])
+rome roadmap = map fst (maxOccurence (countOccurences (roadsFromCities roadmap) []) [])
   where
-    roadsFromCities :: RoadMap -> [(City, Distance)]
+    roadsFromCities :: RoadMap -> [City]
     roadsFromCities [] = []
-    roadsFromCities ((city1, city2, dist):xs) = (city1, dist) : (city2, dist) : roadsFromCities xs
+    roadsFromCities ((city1, city2,_):xs) = city1 : city2 : roadsFromCities xs
 
-    sumFromCities :: [(City, Distance)] -> [(City, Distance)] -> [(City, Distance)]
-    sumFromCities [] acc = acc
-    sumFromCities ((city, dist):xs) acc = sumFromCities filteredXs ((city, dist + sumDist sameCity):acc)
+    countOccurences :: [City] -> [(City, Int)] -> [(City, Int)]
+    countOccurences [] acc = acc
+    countOccurences (city:xs) acc = countOccurences filteredXs ((city, 1 + sameCity):acc)
       where
-        sameCity = filter (\(c, _) -> c == city) xs
-        filteredXs = filter (\(c, _) -> c /= city) xs
-        sumDist [] = 0
-        sumDist ((_, d):rest) = d + sumDist rest
+        sameCity = length(filter (== city) xs)
+        filteredXs = filter (/= city) xs
 
-    rome_acc :: [(City, Distance)] -> [(City, Distance)] -> [(City, Distance)]
-    rome_acc [] acc = acc
-    rome_acc ((city, dist):xs) [] = rome_acc xs [(city, dist)]
-    rome_acc ((city, dist):xs) ((maxcity, maxdist):rest)
-        | dist > maxdist = rome_acc xs [(city, dist)]
-        | dist == maxdist = rome_acc xs ((city, dist):(maxcity, maxdist):rest)
-        | otherwise = rome_acc xs ((maxcity, maxdist):rest)
+    maxOccurence :: [(City, Int)] -> [(City, Int)] -> [(City, Int)]
+    maxOccurence [] acc = acc
+    maxOccurence ((city, count):xs) [] = maxOccurence xs [(city,count)]
+    maxOccurence ((city, count):xs) ((maxcity, maxcount):rest)
+      | count > maxcount = maxOccurence xs [(city, count)]
+      | count == maxcount = maxOccurence xs ((city, count):(maxcity, maxcount):rest)
+      | otherwise = maxOccurence xs ((maxcity, maxcount):rest)
 
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
