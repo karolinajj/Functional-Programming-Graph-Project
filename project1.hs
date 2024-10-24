@@ -1,6 +1,9 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
+
+import Data.Maybe (isJust, mapMaybe)
+import Data.List (sort)
 -- {-# HLINT ignore "Use camelCase" #-}
 
 -- PFL 2024/2025 Practical assignment 1
@@ -15,8 +18,8 @@ type RoadMap = [(City,City,Distance)]
 
 -- Helper functions 
 
-addCity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates (might not work when called by other functions hadn't tested that case)
-addCity city cities
+addcity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates (might not work when called by other functions hadn't tested that case)
+addcity city cities
     | city `elem` cities  = cities
     | otherwise           = city : cities
 
@@ -25,11 +28,40 @@ areEq city_a city_b city1 city2
     | (city_a == city1 && city_b == city2) || (city_a == city2 && city_b == city1) = True
     | otherwise = False
 
+isNotStartOrTarget :: City -> City -> City -> Bool -- Function to check that the city is neither the start or the end
+isNotStartOrTarget start target city = city /= start && city /= target
+
+constructPath :: City -> City -> [City] -> [City] -- Function to add a city at the start and a city at the end
+constructPath start target path = start : path ++ [target]
+
+generatePaths :: [City] -> City -> City -> [[City]] -- Function to generate all possible paths between two cities
+generatePaths allCities start target = 
+    let intermediateCities = filter (isNotStartOrTarget start target) allCities
+        possibleIntermediatePaths = Data.List.permutations intermediateCities -- Generate permutations of the intermediate cities
+        completePaths = map (constructPath start target) possibleIntermediatePaths -- Add the start and target cities to each path
+    in completePaths
+
+createPathDistanceTuple :: Path -> Distance -> (Path, Distance) -- Converts a path and distance into a tuple (path, distance)
+createPathDistanceTuple path distance = (path, distance)
+
+toPathDistance :: RoadMap -> Path -> Maybe (Path, Distance) -- Function which saves in a tuple the path with the respective cost of it exists
+toPathDistance roads path = fmap (createPathDistanceTuple path) (pathDistance roads path)
+
+
+dfs :: RoadMap -> City -> [City] -> [City] -- Perform DFS to find all reachable cities
+dfs roadmap city visited
+    | city `elem` visited = visited
+    | otherwise = exploreNeighbors (city : visited) (adjacent roadmap city)
+  where
+    exploreNeighbors visited [] = visited
+    exploreNeighbors visited ((neighbor, _):neighbors) =
+        exploreNeighbors (dfs roadmap neighbor visited) neighbors
+
 -- Functions requested by the project
 
 cities :: RoadMap -> [City] -- It takes a roadmap as argument and then returns a list with all the cities that are there present
 cities [] = []                                                                        -- Case when the roadmap is empty
-cities ( (city1 , city2 , _ ) : rest ) = addCity city1 (addCity city2 (cities rest))  -- Take the roadmap and only process the information related to the cities and not distances
+cities ( (city1 , city2 , _ ) : rest ) = addcity city1 (addcity city2 (cities rest))  -- Take the roadmap and only process the information related to the cities and not distances
 
 areAdjacent :: RoadMap -> City -> City -> Bool -- True if there is a tuple in the Roadmap which uses the city1 and city2
 areAdjacent [] _ _ = False
@@ -44,14 +76,13 @@ distance ((city_a, city_b, dist):xs) city1 city2
     | otherwise = distance xs city1 city2
 
 adjacent :: RoadMap -> City -> [(City,Distance)] -- ? is there only one road conecting two cities? any specific order?
-adjacent roadmap city = foldr addCity [] roadmap -- Need to review this function since it calls a helper functions which has a different purpose
+adjacent roadmap city = foldr addCity [] roadmap
   where
     addCity (city_a, city_b, dist) xs
       | city_a == city = (city_b, dist) : xs
       | city_b == city = (city_a, dist) : xs
       | otherwise = xs
 
--- Still needs to be reviewed cuz its not printing the correct results
 pathDistance :: RoadMap -> Path -> Maybe Distance -- Calculates the distance between two cities following a certain path, if that said path exists along roads (RoadMap)
 pathDistance roads path
     | null path = Just 0  -- Case of empty path
@@ -93,14 +124,39 @@ rome roadmap = map fst (maxOccurence (countOccurences (roadsFromCities roadmap) 
       | count == maxcount = maxOccurence xs ((city, count):(maxcity, maxcount):rest)
       | otherwise = maxOccurence xs ((maxcity, maxcount):rest)
 
-isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+isStronglyConnected :: RoadMap -> Bool -- Check if the graph is strongly connected, by providing a roadmap
+isStronglyConnected [] = False                    -- Returns false if dont exist a roadmap
+isStronglyConnected cityMap =
+    let nations = cities cityMap                  -- Get all unique cities
+        start = head nations                      -- Start for example from the head of the list
+        reachableCities = dfs cityMap start []    -- Perform DFS from the starting city
+    in length reachableCities == length nations   -- Check if all cities are reachable
 
-shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+-- Still need to find a way to print vary options of path
+shortestPath :: RoadMap -> City -> City -> [Path] -- Computes all shortest paths considering a certain roads (RoadMap) and start, target (City)
+shortestPath roads start target
+    | start == target = [[start]]  -- If the start and target are the same
+    | otherwise =
+        let allCities = cities roads  -- Get all cities
+            candidatePaths = generatePaths allCities start target  -- Generate all paths to evaluate
+            validPathsWithDistances = mapMaybe (toPathDistance roads) candidatePaths -- Validate the paths
+            
+            directPathDistance = pathDistance roads [start, target]  -- Check for direct path from start to target
+            directPathWithDistance = case directPathDistance of
+                Just dist -> [createPathDistanceTuple [start, target] dist]  -- Create a tuple with the direct path and distance
+                Nothing -> []  -- No direct path, return empty 
+
+            allValidPathsWithDistances = validPathsWithDistances ++ directPathWithDistance -- Combine valid paths with the direct path if valid
+
+        in if null allValidPathsWithDistances
+           then []  -- If no valid paths exist
+           else
+                let shortestDist = minimum (map snd allValidPathsWithDistances) -- Find the shortest distance 
+               in [path | (path, dist) <- allValidPathsWithDistances, dist == shortestDist]  -- Return all paths with the shortest distance
+
 
 travelSales :: RoadMap -> Path
-travelSales = undefined
+travelSales = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
