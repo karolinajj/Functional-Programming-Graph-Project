@@ -1,9 +1,8 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
-
-import Data.Maybe (isJust, mapMaybe)
-import Data.List (sort)
+import qualified Data.Maybe (isJust, mapMaybe)
+import qualified Data.Maybe as Data
 -- {-# HLINT ignore "Use camelCase" #-}
 
 -- PFL 2024/2025 Practical assignment 1
@@ -139,7 +138,7 @@ shortestPath roads start target
     | otherwise =
         let allCities = cities roads  -- Get all cities
             candidatePaths = generatePaths allCities start target  -- Generate all paths to evaluate
-            validPathsWithDistances = mapMaybe (toPathDistance roads) candidatePaths -- Validate the paths
+            validPathsWithDistances = Data.mapMaybe (toPathDistance roads) candidatePaths -- Validate the paths
             
             directPathDistance = pathDistance roads [start, target]  -- Check for direct path from start to target
             directPathWithDistance = case directPathDistance of
