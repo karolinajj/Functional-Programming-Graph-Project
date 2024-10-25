@@ -3,7 +3,7 @@
 ## Group Members:
 
     Luis Fernandes     UP:202108770 
-    Karolina Jedraszek UP:XXXXXXXXX 
+    Karolina Jedraszek UP:202402265 
 
 ## Distribution of work
 
