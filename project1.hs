@@ -1,9 +1,6 @@
 import qualified Data.List
 import qualified Data.Array
 import qualified Data.Bits
---import qualified Data.Maybe (isJust, mapMaybe)
---import qualified Data.Maybe as Data
--- {-# HLINT ignore "Use camelCase" #-}
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -18,7 +15,7 @@ type AdjList = [(City,[(City,Distance)])]
 
 -- Helper functions 
 
-addcity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates (might not work when called by other functions hadn't tested that case)
+addcity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates 
 addcity city cities
     | city `elem` cities  = cities
     | otherwise           = city : cities
@@ -27,25 +24,6 @@ areEq :: City -> City ->  City -> City -> Bool -- True if pair of city_a and cit
 areEq city_a city_b city1 city2
     | (city_a == city1 && city_b == city2) || (city_a == city2 && city_b == city1) = True
     | otherwise = False
-
-isNotStartOrTarget :: City -> City -> City -> Bool -- Function to check that the city is neither the start or the end
-isNotStartOrTarget start target city = city /= start && city /= target
-
-constructPath :: City -> City -> [City] -> [City] -- Function to add a city at the start and a city at the end
-constructPath start target path = start : path ++ [target]
-
-generatePaths :: [City] -> City -> City -> [[City]] -- Function to generate all possible paths between two cities
-generatePaths allCities start target = 
-    let intermediateCities = filter (isNotStartOrTarget start target) allCities
-        possibleIntermediatePaths = Data.List.permutations intermediateCities -- Generate permutations of the intermediate cities
-        completePaths = map (constructPath start target) possibleIntermediatePaths -- Add the start and target cities to each path
-    in completePaths
-
-createPathDistanceTuple :: Path -> Distance -> (Path, Distance) -- Converts a path and distance into a tuple (path, distance)
-createPathDistanceTuple path distance = (path, distance)
-
-toPathDistance :: RoadMap -> Path -> Maybe (Path, Distance) -- Function which saves in a tuple the path with the respective cost of it exists
-toPathDistance roads path = fmap (createPathDistanceTuple path) (pathDistance roads path)
 
 dfs :: RoadMap -> City -> [City] -> [City] -- Perform DFS to find all reachable cities
 dfs roadmap city visited
@@ -56,7 +34,7 @@ dfs roadmap city visited
     exploreNeighbors visited ((neighbor, _):neighbors) =
         exploreNeighbors (dfs roadmap neighbor visited) neighbors
 
-createAdjList :: RoadMap -> AdjList
+createAdjList :: RoadMap -> AdjList -- Creates a new list of tuples with them containing each city and their respective edges
 createAdjList roadmap = foldr addEdge [] roadmap
   where
     addEdge (city1, city2, dist) acc = addNeighbor city2 (city1, dist) (addNeighbor city1 (city2, dist) acc)
@@ -67,8 +45,7 @@ createAdjList roadmap = foldr addEdge [] roadmap
       | c == city = (c, neighbor : neighbors) : rest
       | otherwise = (c, neighbors) : addNeighbor city neighbor rest
 
---Function to find the minimum direct distance between two cities
-minDirectDistance :: City -> City -> AdjList -> Maybe Distance
+minDirectDistance :: City -> City -> AdjList -> Maybe Distance -- Function to find the minimum direct distance between two cities
 minDirectDistance _ _ [] = Nothing
 minDirectDistance city1 city2 ((city, neighbors):rest)
     | city == city1 = 
@@ -114,18 +91,18 @@ adjacent roadmap city = foldr exctractCityDist [] roadmap
 
 pathDistance :: RoadMap -> Path -> Maybe Distance -- Calculates the distance between two cities following a certain path, if that said path exists along roads (RoadMap)
 pathDistance roads path
-    | null path = Just 0  -- Case of empty path
-    | length path == 1 = Just 0  -- Case of single city
+    | null path = Just 0                                                                          -- Case of empty path
+    | length path == 1 = Just 0                                                                   -- Case of single city
     | otherwise = 
-      case distance roads startCity nextCity of  -- Calculate the distance if there is a road
+      case distance roads startCity nextCity of                                                   -- Calculate the distance if there is a road
         Just dist -> 
-            case pathDistance roads (nextCity : tail (tail path)) of  -- Recursive call for the rest of the path
-                Just total -> Just (dist + total)  -- Sum the distances of the road with the rest
-                Nothing -> Nothing  -- Marks the path as invalid
-        Nothing -> Nothing  -- Marks the path invalid if there is no distance
+            case pathDistance roads (nextCity : tail (tail path)) of                              -- Recursive call for the rest of the path
+                Just total -> Just (dist + total)                                                 -- Sum the distances of the road with the rest
+                Nothing -> Nothing                                                                -- Marks the path as invalid
+        Nothing -> Nothing                                                                        -- Marks the path invalid if there is no distance
   where
-    startCity = head path         -- Selects the first city on the path
-    nextCity = head (tail path)   -- Selects the next city on the path 
+    startCity = head path                                                                         -- Selects the first city on the path
+    nextCity = head (tail path)                                                                   -- Selects the next city on the path 
 
 --I assum that:
 --1) in (city1, city2, dist) city1 /= city2
@@ -161,27 +138,40 @@ isStronglyConnected cityMap =
         reachableCities = dfs cityMap start []    -- Perform DFS from the starting city
     in length reachableCities == length nations   -- Check if all cities are reachable
 
--- Still need to find a way to print vary options of path
--- shortestPath :: RoadMap -> City -> City -> [Path] -- Computes all shortest paths considering a certain roads (RoadMap) and start, target (City)
--- shortestPath roads start target
---     | start == target = [[start]]  -- If the start and target are the same
---     | otherwise =
---         let allCities = cities roads  -- Get all cities
---             candidatePaths = generatePaths allCities start target  -- Generate all paths to evaluate
---             validPathsWithDistances = Data.mapMaybe (toPathDistance roads) candidatePaths -- Validate the paths
-            
---             directPathDistance = pathDistance roads [start, target]  -- Check for direct path from start to target
---             directPathWithDistance = case directPathDistance of
---                 Just dist -> [createPathDistanceTuple [start, target] dist]  -- Create a tuple with the direct path and distance
---                 Nothing -> []  -- No direct path, return empty 
+shortestPath :: RoadMap -> City -> City -> [Path] -- Find all the shortest paths starting from start to target when using the cityMap
+shortestPath [] _ _ = []                                                                                      -- Case when the roadmap provided is empty
+shortestPath cityMap start target
+  | start == target = [[start]]                                                                               -- Case when the target and start are the same
+  | otherwise = findShortestPaths [[start]] [] maxBound adjList
+  where
+    adjList = createAdjList cityMap                                                                           -- Create a list with adjacent cities of each city
 
---             allValidPathsWithDistances = validPathsWithDistances ++ directPathWithDistance -- Combine valid paths with the direct path if valid
+    findShortestPaths :: [Path] -> [Path] -> Distance -> AdjList -> [Path]                                    -- Function that uses BFS to search each path while filtering based on the distance
+    findShortestPaths [] shortestPaths _ _ = shortestPaths                                                    -- Case when there is no more paths to explore
+    findShortestPaths (path:paths) shortestPaths shortestDist adjList =
+      let currentCity = last path                                                                             -- Taking the value of the last element of the path which can be the target or not
+          nextPaths = concatMap (expandPath path) (neighbors adjList currentCity)                             -- Step to create the rest of possibles paths that still need to be evaluated
+      in
+        if currentCity == target then                                                                         -- Checks if the last of that path is the target
+          let pathDist = pathDistance cityMap path                                                            -- Calcalutes the distance of the current path
+          in case pathDist of
+            Just dist
+              | dist < shortestDist -> findShortestPaths paths [path] dist adjList                            -- Case when the current path is shorter than the rest
+              | dist == shortestDist -> findShortestPaths paths (path : shortestPaths) shortestDist adjList   -- Case when the path is equal cost than the rest
+              | otherwise -> findShortestPaths paths shortestPaths shortestDist adjList                       -- Case when the current path is higher cost than the rest
+            Nothing -> findShortestPaths paths shortestPaths shortestDist adjList                             -- Case when the current path is invalid
+        else
+          findShortestPaths (paths ++ nextPaths) shortestPaths shortestDist adjList                           -- Case when the current path doesnt end on the target
 
---         in if null allValidPathsWithDistances
---            then []  -- If no valid paths exist
---            else
---                 let shortestDist = minimum (map snd allValidPathsWithDistances) -- Find the shortest distance 
---                in [path | (path, dist) <- allValidPathsWithDistances, dist == shortestDist]  -- Return all paths with the shortest distance
+    expandPath :: Path -> (City, Distance) -> [Path]                                                          -- Function to add more cities to the path while keeping track of those that are already on it
+    expandPath path (nextCity, edgeDist)
+      | nextCity `elem` path = []                                                                             -- Part to check if they are in the path
+      | otherwise = [path ++ [nextCity]]
+
+    neighbors :: AdjList -> City -> [(City, Distance)]                                                        -- Function to get the list of the neighbors of a city when provided with the adjlist
+    neighbors adjList city = case lookup city adjList of                                                      
+      Just neighborsList -> neighborsList
+      Nothing -> []
 
 
 tspBruteForce :: RoadMap -> Path
@@ -199,6 +189,10 @@ gTest3 = [("0","1",4),("2","3",2)]
 
 gTest4 :: RoadMap -- unconnected graph
 gTest4 = [("A", "B", 10), ("A", "C", 15), ("B", "C", 10), ("B", "D", 12), ("C", "D", 10)]
+
+edges :: RoadMap -- multiple paths
+edges = [("A", "B", 3),  ("A", "C", 1),  ("C", "B", 2),  ("A", "D", 2), ("D", "B", 1)]
+
 -- Some cities for tests
 cTest1 :: City
 cTest1 = "6"

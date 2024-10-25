@@ -30,10 +30,13 @@ Responsible: Karolina
 
 ## Process of work for shortestPath
 
-For the shortestpath we followed this path to analyse and get the answer for the question. First we check if the start and the target are the same and so end the function there by returning the result [[start]]. <br>
-In the case of those being different, first we create some variables those being, a list containing all the cities (allCities) using one of the earlier functions asked, then we create all the possibles paths that can exist by using a helper function called generatePaths which needs the roadmap and the starter and ending cities, with it we use a function from the list module to compute all the possible variations and then we add the start at the start and the target at the end of the list. <br>
-With the list of possibles paths we then check to see if they are valid or not by using the pathDistance function mixed with another one to produce a list of tuples showing the (path,distance). We use a mapMaybe in order to be possible to deal with the case of Nothing without further more work. <br>
-After we check if there is a direct path, which means if exists a edge which is the start <-> target (since the edges are undirected we only need to check if there is an edge which have start and target as cities).Depending on the value it might be added if existed following the tuple formula or empty tuple in case of returning nothing. <br>
-Then we check if after all there is a path in said list of tuples. If no ends the function with a empty list. Otherwise, we first retreive the value of the lowest distance to a variable and then we filter the list with only the paths that have that value, discarding now the value of distance since its not expected at the end. <br>
+So in order to do the shortestPath function we followed this procedure: <br>
+First we check if the roadmap is empty, if yes end the function by returning empty. <br>
+Then we get to the actual cases: We now check if the start and target cities provided are not the same, in the case they are we return [start]. <br>
+On the case they are not we proced to call an helper function called findShortestPaths which takes a list of paths to start evaluating, a empty list where the result will be, a distance where we set to maxBound so when searching for the distance on the first case we dont accidently give a lower number than the case and lastly a new type that we created. <br>
+This new type is: type AdjList = [(City,[(City,Distance)])], which basically creates a list of tuples where the first argument is a city1 and the second one is a list of tuples but of cities and their respecitve distance to the city1. <br>
+Now this functions works using the BFS type to search for all the paths. It then starts creating the path and calculating the distance, once it reaches the target it then evaluates the distance with the value that was provided before when the function was called, this is only applied to the first path possible, with a distance that is. <br>
+Then depending it can go in 2 ways whenever the path has a distance different that the current shortestDist it creates a new list with this path and deletes the other, or simply skips the path entirely, when its lower and higher than the value respectively. <br>
+Once all paths are analysed we then return the list with all the paths that cost the lowest. 
 
 ## Process of work for travelSales
