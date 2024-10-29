@@ -4,7 +4,6 @@ import qualified Data.Bits
 
 -- PFL 2024/2025 Practical assignment 1
 
--- Uncomment the some/all of the first three lines to import the modules, do not change the code of these lines.
 
 type City = String
 type Path = [City]
@@ -13,19 +12,26 @@ type Distance = Int
 type RoadMap = [(City,City,Distance)]
 type AdjList = [(City,[(City,Distance)])]
 
--- Helper functions 
+-- HELPER FUNCTIONS
 
-addcity :: City -> [City] -> [City]   -- Function to filter the citymap in order to not have duplicates 
+-- Adds city to a list of cities (without creating duplicates)
+-- Arguments : function takes a city and a list of cities it should be added to
+addcity :: City -> [City] -> [City]
 addcity city cities
     | city `elem` cities  = cities
     | otherwise           = city : cities
 
-areEq :: City -> City ->  City -> City -> Bool -- True if pair of city_a and city_b is equivalent to pair city1 and city2
+-- Checks if a pair of city_a and city_b is equivalent to pair city1 and city2
+-- Arguments : 4 city names - city_a, city_b, city1, city2
+
+areEq :: City -> City ->  City -> City -> Bool
 areEq city_a city_b city1 city2
     | (city_a == city1 && city_b == city2) || (city_a == city2 && city_b == city1) = True
     | otherwise = False
 
-dfs :: RoadMap -> City -> [City] -> [City] -- Perform DFS to find all reachable cities
+-- Performs DFS on a graph represented by roadmap to find all reachable cities, function re
+-- Arguments : roadmap to be explored, city - currently considered vertex, visted - cities visted by current stage
+dfs :: RoadMap -> City -> [City] -> [City]
 dfs roadmap city visited
     | city `elem` visited = visited
     | otherwise = exploreNeighbors (city : visited) (adjacent roadmap city)
@@ -34,7 +40,9 @@ dfs roadmap city visited
     exploreNeighbors visited ((neighbor, _):neighbors) =
         exploreNeighbors (dfs roadmap neighbor visited) neighbors
 
-createAdjList :: RoadMap -> AdjList -- Creates a new list of tuples with them containing each city and their respective edges
+-- Creates an adjacency list to represent a given roadmap
+-- Argumetns : rodmap with vertexes and their distances 
+createAdjList :: RoadMap -> AdjList
 createAdjList roadmap = foldr addEdge [] roadmap
   where
     addEdge (city1, city2, dist) acc = addNeighbor city2 (city1, dist) (addNeighbor city1 (city2, dist) acc)
@@ -45,8 +53,9 @@ createAdjList roadmap = foldr addEdge [] roadmap
       | c == city = (c, neighbor : neighbors) : rest
       | otherwise = (c, neighbors) : addNeighbor city neighbor rest
 
-
-minDirectDistance :: City -> City -> AdjList -> Int -- Function to find the minimum direct distance between two cities
+-- Finds the minimum direct distance between two cities
+-- Arguments : city1,city2 - cities to find the min. distance, adjlist - represents a graph
+minDirectDistance :: City -> City -> AdjList -> Int
 minDirectDistance _ _ [] = 10^9 -- returns a large value if cities are not connected
 minDirectDistance city1 city2 ((city, neighbors):rest)
     | city1 == city2 = 0
@@ -56,30 +65,36 @@ minDirectDistance city1 city2 ((city, neighbors):rest)
             distances -> minimum (map snd distances)
     | otherwise = minDirectDistance city1 city2 rest
 
+-- Converts Int to City, by returning n-th element of cities list
+-- Argumetns : n - number of element from list of cities (cities) to be return
 intToCity :: Int -> [City] -> City
 intToCity n cities
   | n < 0 || n >= length cities = "Error: Index out of bounds"
   | otherwise = cities !! n
 
--- Functions requested by the project
+-- REQESTED FUNCTIONS
 
-cities :: RoadMap -> [City] -- It takes a roadmap as argument and then returns a list with all the cities that are there present
+-- It takes a roadmap as argument and then returns a list with all the cities that are there present
+cities :: RoadMap -> [City]
 cities [] = []                                                                        -- Case when the roadmap is empty
 cities ( (city1 , city2 , _ ) : rest ) = addcity city1 (addcity city2 (cities rest))  -- Take the roadmap and only process the information related to the cities and not distances
 
-areAdjacent :: RoadMap -> City -> City -> Bool -- True if there is a tuple in the Roadmap which uses the city1 and city2
+-- Checks if there is a tuple in the Roadmap with city1 and city2
+areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent [] _ _ = False
 areAdjacent ((city_a, city_b, _):xs) city1 city2
     | areEq city_a city_b city1 city2 = True
     | otherwise = areAdjacent xs city1 city2
 
-distance :: RoadMap -> City -> City -> Maybe Distance -- It returns a distance if there is a tuple which uses the city1 and city2
+-- Returns a distance if there is a tuple in a roadmap with city1 and city2, othewise returns Nothing
+distance :: RoadMap -> City -> City -> Maybe Distance
 distance [] _ _ = Nothing
 distance ((city_a, city_b, dist):xs) city1 city2
     | areEq city_a city_b city1 city2 = Just dist
     | otherwise = distance xs city1 city2
 
-adjacent :: RoadMap -> City -> [(City,Distance)] -- ? is there only one road conecting two cities? any specific order?
+-- Returns a list of tuples (city,distance) adjacent to a given city (given by argument) in a graph represented by a roadmap
+adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent roadmap city = foldr exctractCityDist [] roadmap
   where
     exctractCityDist (city_a, city_b, dist) xs
@@ -87,7 +102,8 @@ adjacent roadmap city = foldr exctractCityDist [] roadmap
       | city_b == city = (city_a, dist) : xs
       | otherwise = xs
 
-pathDistance :: RoadMap -> Path -> Maybe Distance -- Calculates the distance between two cities following a certain path, if that said path exists along roads (RoadMap)
+-- Calculates the sumaric distance between cities of a certain path, if that said path exists along roads (RoadMap)
+pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance roads path
     | null path = Just 0                                                                          -- Case of empty path
     | length path == 1 = Just 0                                                                   -- Case of single city
@@ -102,23 +118,24 @@ pathDistance roads path
     startCity = head path                                                                         -- Selects the first city on the path
     nextCity = head (tail path)                                                                   -- Selects the next city on the path 
 
---I assum that in the roadmap there is only one triple for each edge
+-- Returns a list of cities (from roadmap) with the highest degree
+-- Side notes : I assum that in the roadmap there is only one triple for each edge
 rome :: RoadMap -> [City]
 rome [] = []
 rome roadmap = map fst (maxOccurence (countOccurences (roadsFromCities roadmap) []) [])
   where
-    roadsFromCities :: RoadMap -> [City]
+    roadsFromCities :: RoadMap -> [City] -- Creates a list of cities by extracting them from each road tuple in the roadmap (with duplicates if a city appears multiple times across roads)
     roadsFromCities [] = []
     roadsFromCities ((city1, city2,_):xs) = city1 : city2 : roadsFromCities xs
 
-    countOccurences :: [City] -> [(City, Int)] -> [(City, Int)]
+    countOccurences :: [City] -> [(City, Int)] -> [(City, Int)] -- Counts occurences of each city in a cities list and returns acc - accumulator with list of each city and number of its occurences
     countOccurences [] acc = acc
     countOccurences (city:xs) acc = countOccurences filteredXs ((city, 1 + sameCity):acc)
       where
         sameCity = length (filter (== city) xs)
         filteredXs = filter (/= city) xs
 
-    maxOccurence :: [(City, Int)] -> [(City, Int)] -> [(City, Int)]
+    maxOccurence :: [(City, Int)] -> [(City, Int)] -> [(City, Int)] -- Returns a list of (city,number) that occured maximum ammount of times in a provided list of cities and their occurences. Acc is an accumulator to store the result  
     maxOccurence [] acc = acc
     maxOccurence ((city, count):xs) [] = maxOccurence xs [(city,count)]
     maxOccurence ((city, count):xs) ((maxcity, maxcount):rest)
@@ -126,7 +143,7 @@ rome roadmap = map fst (maxOccurence (countOccurences (roadsFromCities roadmap) 
       | count == maxcount = maxOccurence xs ((city, count):(maxcity, maxcount):rest)
       | otherwise = maxOccurence xs ((maxcity, maxcount):rest)
 
-isStronglyConnected :: RoadMap -> Bool -- Check if the graph is strongly connected, by providing a roadmap
+isStronglyConnected :: RoadMap -> Bool -- Check if the graph is strongly connected in a given roadmap
 isStronglyConnected [] = False                    -- Returns false if dont exist a roadmap
 isStronglyConnected cityMap =
     let nations = cities cityMap                  -- Get all unique cities
@@ -169,7 +186,7 @@ shortestPath cityMap start target
       Just neighborsList -> neighborsList
       Nothing -> []
 
-
+-- Returns a path form a travelling salseman problem, uses dynamic programming and memoization to reduce time
 travelSales :: RoadMap -> Path
 travelSales roadmap = 
     if minimum costs < 10^9 
@@ -179,26 +196,26 @@ travelSales roadmap =
     adjlist = createAdjList roadmap
     cities = map fst adjlist
     n = length cities
-    start = 0
+    start = 0 -- number of a starting city
     lastSubset = ((2^(n-1)) - 1) `Data.Bits.shiftL` 1
 
-    memo = Data.Array.array ((0, 0), (n - 1, (1 `Data.Bits.shiftL` n) - 1)) 
+    memo = Data.Array.array ((0, 0), (n - 1, (1 `Data.Bits.shiftL` n) - 1))
            [((end, mask), dp (end, mask)) | end <- [0..n-1], mask <- [0..(1 `Data.Bits.shiftL` n) - 1]]
 
     costs = [memo Data.Array.! (i, lastSubset) + minDirectDistance (intToCity i cities) (intToCity start cities) adjlist | i <- [1..n-1]]
     minIndex = snd $ minimum $ zip costs [1..n-1]
 
-    dp :: (Int, Int) -> Int
+    dp :: (Int, Int) -> Int -- Fills memoization table by performing dynamic programming, arguments: mask - represents cities that can be used to get to the end vertex
     dp (end, 0) = minDirectDistance (intToCity end cities) (intToCity start cities) adjlist
     dp (end, mask)
       | mask == Data.Bits.setBit 0 end = minDirectDistance (intToCity end cities) (intToCity start cities) adjlist
       | otherwise = minimum [memo Data.Array.! (j, Data.Bits.clearBit mask end) + minDirectDistance (intToCity j cities) (intToCity end cities) adjlist 
                              | j <- citiesInSubset mask, j /= end]
 
-    citiesInSubset :: Int -> [Int]
+    citiesInSubset :: Int -> [Int] -- Exctracts id's of cities represented by a subset
     citiesInSubset subset = [i | i <- [1..n-1], Data.Bits.testBit subset i]
 
-    findPath :: Int -> Int -> Path
+    findPath :: Int -> Int -> Path -- Recovers path from the dp function. Arguments : mask - represents cities that can be used to get to the end vertex
     findPath end 0 = [intToCity end cities]
     findPath end mask
       | mask == Data.Bits.setBit 0 end = [intToCity end cities, intToCity 0 cities]
@@ -219,10 +236,3 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 gTest3 = [("0","1",4),("2","3",2)]
-
--- Some cities for tests
-cTest1 :: City
-cTest1 = "6"
-
-cTest2 :: City
-cTest2 = "10"
