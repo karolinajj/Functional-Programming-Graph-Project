@@ -40,3 +40,36 @@ Then depending it can go in 2 ways whenever the path has a distance different th
 Once all paths are analysed we then return the list with all the paths that cost the lowest. 
 
 ## Process of work for travelSales
+Here is a polished and grammatically corrected version of your text:
+
+---
+
+**Idea:**
+We will use dynamic programming with memoization to solve the traveling salesman problem.
+
+First, we will populate a memo array with results (values of the shortest path) obtained from recursive calls to the dp function, following this formula:
+
+`dp[end][mask] = minimum distance to reach the city 'end' by visiting the subset of cities represented by 'mask' (starting from the start city = 0)`.
+
+We will calculate `dp[i][j]` recursively using the formula:
+
+`dp[end][S] = min(dp[end][S], dp[k][S — {end}] + distance[k][end]) for all k in subset S and k ≠ end`.
+
+Of course, we need to consider the base cases:
+
+`dp[end][0]` = minimum distance from the start city to reach the city end without visiting any other cities = distance from end city to the start city.
+
+`dp[end][{end}]` = minimum distance from the start city to reach the city end by visiting only end = distance from end city to the start city.
+
+To calculate the value of the shortest path, we find the minimum of `dp[end][mask]` for each end in the cities (except the starting city) where mask represents a subset containing all cities except the start city (lastSubset).
+
+We use a memo array (that stores results for each end and mask from the dp function) to reduce time. Without this, we would call the dp function with the same arguments multiple times, wasting time.
+
+To retrieve the path (findPath function), we first calculate the dp function and, based on its results: the value of the shortest path and the last vertex (end) of this path — we reconstruct the shortest path.
+
+Similarly to the shortestPath function, we use a new data type, AdjList = [(City,[(City,Distance)])], to represent a roadmap. Although it is not as time-efficient as using matrices, it uses less memory.
+
+**Additional information:**
+We use Int values to represent each city, so to get the minDirectDistance, we use the intToCity function to convert a city's number to its actual name from the roadmap.
+
+
