@@ -43,7 +43,8 @@ Once all paths are analysed we then return the list with all the paths that cost
 **Idea:**
 We will use dynamic programming with memoization to solve the traveling salesman problem.
 
-First, we will populate a memo array with results (values of the shortest path) obtained from recursive calls to the dp function, following this formula:
+First we are going to fill a memo array with results (values of the shortest path) of recurisve calls for the dp function.
+Following the formula:
 
 `dp[end][mask] = minimum distance to reach the city 'end' by visiting the subset of cities represented by 'mask' (starting from the start city = 0)`.
 
