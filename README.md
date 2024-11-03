@@ -58,7 +58,7 @@ Of course, we need to consider the base cases:
 
 `dp[end][{end}]` = minimum distance from the start city to reach the city end by visiting only end = distance from end city to the start city.
 
-To calculate the value of the shortest path, we find the minimum of `dp[end][mask]` for each end in the cities (except the starting city) where mask represents a subset containing all cities except the start city (lastSubset).
+To calculate the value of the shortest path, we find the minimum of `dp[end][mask] + minDirectDistance (intToCity i cities) (intToCity start cities)` for each end in the cities (except the starting city) where mask represents a subset containing all cities except the start city (lastSubset). We need to include the minDirectDistance here because it occurs twice in or path.
 
 We use a memo array (that stores results for each end and mask from the dp function) to reduce time. Without this, we would call the dp function with the same arguments multiple times, wasting time.
 
@@ -68,5 +68,6 @@ Similarly to the shortestPath function, we use a new data type, AdjList = [(City
 
 **Additional information:**
 We use Int values to represent each city, so to get the minDirectDistance, we use the intToCity function to convert a city's number to its actual name from the roadmap.
+Moreover, because the graph is not weighted minDirectDistance i j = minDirectDistance j i.
 
 
