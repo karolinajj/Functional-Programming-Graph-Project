@@ -40,10 +40,6 @@ Then depending it can go in 2 ways whenever the path has a distance different th
 Once all paths are analysed we then return the list with all the paths that cost the lowest. 
 
 ## Process of work for travelSales
-Here is a polished and grammatically corrected version of your text:
-
----
-
 **Idea:**
 We will use dynamic programming with memoization to solve the traveling salesman problem.
 
