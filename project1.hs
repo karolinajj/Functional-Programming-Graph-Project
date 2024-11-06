@@ -188,6 +188,7 @@ shortestPath cityMap start target
 
 -- Returns a path form a travelling salseman problem, uses dynamic programming and memoization to reduce time
 travelSales :: RoadMap -> Path
+travelSales [] = []
 travelSales roadmap = 
     if minimum costs < 10^9 
     then intToCity start cities : findPath minIndex lastSubset 
