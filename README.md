@@ -1,32 +1,16 @@
-# PFL-project-1
+# Functional Programming - Graph Project
 
-## Group Members:
-
-    Luis Fernandes     UP:202108770 
-    Karolina Jedraszek UP:202402265 
-
-## Distribution of work
-
-The work was distributed equally (50/50).
+## Functions developed in the project
 
 1. cities :: RoadMap -> [City] <br>
-Responsible: Luis 
 2. areAdjacent :: RoadMap -> City -> City -> Bool <br>
-Responsible: Karolina 
 3. distance :: RoadMap -> City -> City -> Maybe Distance <br>
-Responsible: Karolina 
 4. adjacent :: RoadMap -> City -> [(City,Distance)]
-Responsible: Karolina 
 5. pathDistance :: RoadMap -> Path -> Maybe Distance <br>
-Responsible: Luis
 6. rome :: RoadMap -> [City] <br>
-Responsible: Karolina 
 7. isStronglyConnected :: RoadMap -> Bool <br>
-Responsible: Luis
 8. shortestPath :: RoadMap -> City -> City -> [Path] <br>
-Responsible: Luis
 9. travelSales :: RoadMap -> Path <br>
-Responsible: Karolina 
 
 ## Process of work for shortestPath
 
