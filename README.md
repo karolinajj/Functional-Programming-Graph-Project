@@ -30,7 +30,7 @@ Responsible: Karolina
 
 ## Process of work for shortestPath
 
-So in order to do the shortestPath function we followed this procedure: <br>
+In order to do the shortestPath function we followed this procedure: <br>
 First we check if the roadmap is empty, if yes end the function by returning empty. <br>
 Then we get to the actual cases: We now check if the start and target cities provided are not the same, in the case they are we return [start]. <br>
 On the case they are not we proced to call an helper function called findShortestPaths which takes a list of paths to start evaluating, a empty list where the result will be, a distance where we set to maxBound so when searching for the distance on the first case we dont accidently give a lower number than the case and lastly a new type that we created. <br>
